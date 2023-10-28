@@ -54,7 +54,7 @@ void blink(uint max_blinks) {
   static uint mini_blinks = 0; // we do this many blinks up to max_blinks
   static uint last_blink_time = 0;
   static uint max_blink_interval = 1000;
-  static uint mini_blink_interval = 100;
+  static uint mini_blink_interval = 50;
 
   // only blink if the led is actually off
   if (led_ison())

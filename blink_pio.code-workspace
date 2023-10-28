@@ -1,8 +1,11 @@
 {
 	"folders": [
 		{
-			"name": "blink_pio",
 			"path": "."
+		},
+		{
+			"name": "i2c_scanner_pio",
+			"path": "../../i2c_scanner_pio"
 		}
 	],
 	"settings": {}

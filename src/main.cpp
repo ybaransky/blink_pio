@@ -1,36 +1,81 @@
 #include <Arduino.h>
-#include "defines.h"
+#include "utils.h"
 #include "config.h"
-
-void print_environment(void) {
-  P("compile time:  "); P(__DATE__); P(" " );  PL(__TIME__);
-  PVL(LED_BUILTIN);
-  PVL(digitalRead(LED_BUILTIN));
-}
-
-void led_on(void) { digitalWrite(LED_BUILTIN, LOW);}
-void led_off(void) { digitalWrite(LED_BUILTIN, HIGH);}
-void led_init(void) { pinMode(LED_BUILTIN, OUTPUT);}
-void led_flip(void) { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));}
-int  led_state(void) { return digitalRead(LED_BUILTIN);}
-bool led_ison(void) { return (LOW==digitalRead(LED_BUILTIN));}
+#include "led.h"
 
 const char *filename = "/config.txt";  // <- SD library uses 8.3 filenames
 Config config;                         // <- global configuration object
+Led led;  // use the builtin 
 
+// assume we can only handle 16 tokens
+int tokenize(const String& input, char *tokens[], const char* delimiter=" ") {
+  static char buffer[256];
+  int n=0;
+  input.toCharArray(buffer,255);
+  char *token = ::strtok(buffer, delimiter);
+  while (token) {
+    tokens[n++] = token;
+    token = ::strtok(NULL,delimiter);
+  }
+  return n;
+}
+
+String read_serial(void) {
+  String input = Serial.readString();
+  input.remove(input.length()-2,2); // strip off the last 2 chars (CR, NL)
+  return input;
+}
+
+void action(int n, char *tokens[]) {
+  switch(*tokens[0]) {
+    case 't' : 
+      PVL(millis());
+      break;
+    case 'p' :
+      print_file(filename);
+      break;
+    case 'v' :
+      config.data = ::atoi(tokens[1]);
+      break;
+    case 's' :
+      config_save(filename,config);
+      break;
+    case 'r' :
+      config_load(filename,config);
+      break;
+    case 'c' :
+      PVL(config.hostname);
+      PVL(config.port);
+      PVL(config.data);
+      break;
+    case '?' :
+      PL("t  print millis()");
+      PF1("p  print contents of file %s\n",filename);
+      PL("v  assign value to config.data");
+      PL("s  save config file");
+      PL("r  load config file");
+      PL("c  print config"); 
+      break;
+    default :
+      P("unknown cmd: '"); P(tokens[0]); PL("'");
+      break;
+  }
+  P(PROMPT);
+}
 
 void setup() {
   // Initialize serial port
   Serial.begin(9600);
   while (!Serial) continue;
 
-  led_init();
-  led_off();
-
-
   delay(2000);
   PL(); PL("starting...");
-  print_environment();
+  P("compile time:  "); P(__DATE__); P(" " );  PL(__TIME__);
+  // PVL(LED_BUILTIN);
+  // PVL(digitalRead(LED_BUILTIN));
+
+  led.init();
+  led.off();
 
   // Should load default config if run for the first time
   config_init();
@@ -49,67 +94,17 @@ void setup() {
   P(PROMPT);
 }
 
-void blink(uint max_blinks) {
-
-  static uint mini_blinks = 0; // we do this many blinks up to max_blinks
-  static uint last_blink_time = 0;
-  static uint max_blink_interval = 1000;
-  static uint mini_blink_interval = 50;
-
-  // only blink if the led is actually off
-  if (led_ison())
-    return;
-
-  // only blink its long enough since last run
-  if ((millis() - last_blink_time) < max_blink_interval)
-    return;
-
-  // blink mini_blink times
-  mini_blinks = mini_blinks % max_blinks;
-  mini_blinks++;
-  for (uint i=0; i < mini_blinks; i++) {
-    led_on();  delay(mini_blink_interval);
-    led_off(); delay(mini_blink_interval);
-  } 
-  last_blink_time = millis();
-//  PV(millis()); P("  "); PVL(ledIsOn());
-}
-
 void loop() {
   // put your main code here, to run repeatedly:
-  blink(5);
+  led.blink(5);
+
   if (Serial.available()) {
-    String str = Serial.readString();
-    // strip off the last 2 chars (CR, NL)
-    str.remove(str.length()-2,2);
-    P("recv: "); PL(str);
-
-    if ('t' == str.charAt(0)) {
-      PVL(millis());
-    } else if ('l' == str.charAt(0)) {
-      PVL(str.length());
-      for(uint i=0;i<str.length(); i++) {
-        char c = str.charAt(i);
-        int  k = int(c);
-        P("index: "); P(i);P(" "); PL(k);
-      }
-    } else if ('p' == str.charAt(0)) {
-      print_file(filename);
-    } else if ('v' == str.charAt(0)) {
-      config.data = str.substring(2).toInt();
-    } else if ('s' == str.charAt(0)) {
-      config_save(filename,config);
-    } else if ('r' == str.charAt(0)) {
-      config_load(filename,config);
-    } else if ('c' == str.charAt(0)) {
-      PVL(config.hostname);
-      PVL(config.port);
-      PVL(config.data);
-    } else {
-      P("unknown cmd: '"); P(str); PL("'");
-    }
-
-    P(PROMPT);
-  }
+    char *tokens[16];
+    String str = read_serial();
+    PL(str);
+    int n_tokens = tokenize(str, tokens);
+    if (n_tokens)
+      action(n_tokens,tokens);
+ }
 }
 

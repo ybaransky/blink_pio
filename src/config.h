@@ -1,13 +1,29 @@
 #pragma once
+#define HOSTNAME_SIZE 64
+#define PASSWORD_SIZE 64
+#define FILENAME_SIZE 64
 
-typedef struct Config {
-  char hostname[64];
-  int port;
-  int data;
-} Config;
+typedef struct WifiParmeters {
+  char      hostname[HOSTNAME_SIZE];
+  char      password[PASSWORD_SIZE];
+  int16_t   channel;
+  void      print(void);
+  void      init(void);
+} WifiParameters;
 
-extern void config_init(void);
-extern void config_load(const char *filename, Config &config);
-extern void config_save(const char *filename, const Config &config);
+class Config {
+  public:
+    char            filename[FILENAME_SIZE];
+    WifiParameters  wifiParameters;
+    int             data;
 
-extern void print_file(const char *filename);
+    Config() {};
+    
+    void  init(const char* filename);
+    void  load(void);
+    void  save(void);
+    void  print(void);
+    void  printFile(void);
+};
+
+extern Config gConfig;

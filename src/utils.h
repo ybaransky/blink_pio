@@ -9,3 +9,5 @@
 #define PF2(x,y1,y2)  Serial.printf(x,y1,y2)
 
 #define PROMPT "-> "
+
+#define NELEMS(x)   (sizeof(x) / sizeof((x)[0])     // number of elements in array x

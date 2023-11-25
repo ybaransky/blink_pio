@@ -4,18 +4,19 @@
 #define FILENAME_SIZE 64
 
 typedef struct WifiParmeters {
-  char      hostname[HOSTNAME_SIZE];
-  char      password[PASSWORD_SIZE];
-  int16_t   channel;
+  char      _hostname[HOSTNAME_SIZE];
+  char      _password[PASSWORD_SIZE];
+  int       _channel;
+
   void      print(void);
   void      init(void);
 } WifiParameters;
 
 class Config {
   public:
-    char            filename[FILENAME_SIZE];
-    WifiParameters  wifiParameters;
-    int             data;
+    WifiParameters  _wifiParameters;
+    char            _filename[FILENAME_SIZE];
+    int             _data;
 
     Config() {};
     

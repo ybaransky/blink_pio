@@ -11,15 +11,15 @@
 #define FILE_READ   "r"
 
 void WifiParameters::init(void) {
-  strcpy(hostname,"askyurij.com");
-  strcpy(password,"leslie1a");
-  channel = 0;
+  strcpy(_hostname,"askyurij.com");
+  strcpy(_password,"leslie1a");
+  _channel = 0;
 }
 
 void WifiParameters::print(void) {
-  PVL(hostname);
-  PVL(password);
-  PVL(channel);
+  PVL(_hostname);
+  PVL(_password);
+  PVL(_channel);
 }
 
 // Our configuration structure.
@@ -30,8 +30,8 @@ void WifiParameters::print(void) {
 // https://arduinojson.org/v6/faq/why-must-i-create-a-separate-config-object/
 
 void Config::init(const char* filename) {
-  strcpy(this->filename, filename);
-  wifiParameters.init();
+  _wifiParameters.init();
+  strcpy(_filename, filename);
 
   // Initialize SD library
   while (!FILESYSTEM.begin()) {
@@ -43,7 +43,7 @@ void Config::init(const char* filename) {
 // Loads the configuration from a file
 void Config::load(void) {
   // Open file for reading
-  File file = FILESYSTEM.open(filename, FILE_READ);
+  File file = FILESYSTEM.open(_filename, FILE_READ);
 
   // Allocate a temporary JsonDocument
   // Don't forget to change the capacity to match your requirements.
@@ -56,9 +56,9 @@ void Config::load(void) {
     Serial.println(F("Failed to read file, using default configuration"));
 
   // Copy values from the JsonDocument to the Config
-  strlcpy(wifiParameters.hostname, doc["hostname"] | "empty.com", sizeof(wifiParameters.hostname));
-  strlcpy(wifiParameters.password, doc["password"] | "deadbeef",  sizeof(wifiParameters.password));
-  data = doc["data"] | 1234;
+  strlcpy(_wifiParameters._hostname, doc["hostname"] | "empty.com", sizeof(_wifiParameters._hostname));
+  strlcpy(_wifiParameters._password, doc["password"] | "deadbeef",  sizeof(_wifiParameters._password));
+  _data = doc["data"] | 1234;
 
   // Close the file (Curiously, File's destructor doesn't close the file)
   file.close();
@@ -67,10 +67,10 @@ void Config::load(void) {
 // Saves the configuration to a file
 void Config::save(void) {
   // Delete existing file, otherwise the configuration is appended to the file
-  FILESYSTEM.remove(filename);
+  FILESYSTEM.remove(_filename);
 
   // Open file for writing
-  File file = FILESYSTEM.open(filename, FILE_WRITE);
+  File file = FILESYSTEM.open(_filename, FILE_WRITE);
   if (!file) {
     Serial.println(F("Failed to create file"));
     return;
@@ -82,9 +82,9 @@ void Config::save(void) {
   StaticJsonDocument<256> doc;
 
   // Set the values in the document
-  doc["hostname"] = wifiParameters.hostname;
-  doc["password"] = wifiParameters.password;
-  doc["data"]     = data;
+  doc["hostname"] = _wifiParameters._hostname;
+  doc["password"] = _wifiParameters._password;
+  doc["data"]     = _data;
 
   // Serialize JSON to file
   if (serializeJson(doc, file) == 0) {
@@ -96,14 +96,14 @@ void Config::save(void) {
 }
 
 void Config::print(void) {
-  wifiParameters.print();
-  PVL(data);
+  _wifiParameters.print();
+  PVL(_data);
 }
 
 // Prints the content of a file to the Serial
 void Config::printFile(void) {
   // Open file for reading
-  File file = FILESYSTEM.open(filename, FILE_READ);
+  File file = FILESYSTEM.open(_filename, FILE_READ);
   if (!file) {
     Serial.println(F("Failed to read file"));
     return;

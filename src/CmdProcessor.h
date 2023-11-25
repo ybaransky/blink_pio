@@ -1,10 +1,13 @@
 #pragma once
 
-#include "CmdBuffer.h"
+#define MAX_CMD_BUFFER_SIZE 128
+#define MAX_CMD_TOKENS  12 
 
 class CmdProcessor {
     public:
-        CmdBuffer   buffer;
+        int     _numTokens;
+        char*   _tokens[MAX_CMD_TOKENS];
+        char    _buffer[MAX_CMD_BUFFER_SIZE];
 
         CmdProcessor() {}
 
@@ -13,7 +16,8 @@ class CmdProcessor {
         
     private:
         void read(void);
-        void action(void);
+        void tokenize(void);
+        void doCommand(void);
 };
 
 extern CmdProcessor gCmdProcessor;

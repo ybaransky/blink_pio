@@ -4,25 +4,29 @@
 #include "Config.h"
 
 void CmdProcessor::init(void) {
-    buffer.init();
+  memset(_buffer,0,sizeof(_buffer));
 }
 
 void CmdProcessor::read(void) {
-    unsigned long tout = millis() + 5;
-    P("reading ");PVL(Serial.available());
-    while (Serial.available()>0) { 
-        char c = Serial.read();
-        P("c=");PL((int)c);
-        buffer.add( c );
-        if ((long)(millis() - tout) > 0) break;
-    }
+    init();
+    String input = Serial.readString();
+    input.trim();
+    input.toCharArray(_buffer,MAX_CMD_BUFFER_SIZE);
 }
 
-void CmdProcessor::action(void) {
-  char* token = buffer.getToken(0);
-  if (!token) return;
+void CmdProcessor::tokenize(void) {
+  const char* delimiter = " ";
+  _numTokens = 0;
+  char *token = ::strtok(_buffer, delimiter);
+  while (token) {
+    _tokens[_numTokens++] = token;
+    token = ::strtok(NULL, delimiter);
+  }
+}
 
-  PVL(token[0]);
+void CmdProcessor::doCommand(void) {
+  char* token = _tokens[0];
+  if (!token) return;
   switch (token[0]) {
     case 't' : 
         PVL(millis());
@@ -36,8 +40,12 @@ void CmdProcessor::action(void) {
     case 'l' :
       gConfig.load();
       break;
+    case 'i' :
+      P("compile time:  "); P(__DATE__); P(" ");  PL(__TIME__);
+      break;
     case '?' :
       PL("t  millis()");
+      PL("i  compile time, info");
       PL("g  contents of config");
       PL("s  save config file");
       PL("l  load config file");
@@ -48,11 +56,9 @@ void CmdProcessor::action(void) {
   }
   P(PROMPT);
 }
-  
+
 void CmdProcessor::process() {
     read();
-    PVL(buffer.cb);
-    buffer.tokenize();
-    action();
-    init();
+    tokenize();
+    doCommand();
 }

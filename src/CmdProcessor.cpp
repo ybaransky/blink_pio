@@ -41,7 +41,7 @@ void CmdProcessor::doCommand(void) {
       gConfig.load();
       break;
     case 'i' :
-      P("compile time:  "); P(__DATE__); P(" ");  PL(__TIME__);
+      info();
       break;
     case '?' :
       PL("t  millis()");
@@ -61,4 +61,17 @@ void CmdProcessor::process() {
     read();
     tokenize();
     doCommand();
+}
+
+void CmdProcessor::info(void) {
+  P("compile time:  "); P(__DATE__); P(" ");  PL(__TIME__);
+  PVL(D0);
+  PVL(D1);
+  PVL(D2);
+  PVL(D3);
+  PVL(D4);
+  PVL(D5);
+  PVL(D6);
+  PVL(D7);
+  PVL(D8);
 }

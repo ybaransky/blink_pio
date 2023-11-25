@@ -18,6 +18,8 @@ class CmdProcessor {
         void read(void);
         void tokenize(void);
         void doCommand(void);
+
+        void    info(void);
 };
 
 extern CmdProcessor gCmdProcessor;

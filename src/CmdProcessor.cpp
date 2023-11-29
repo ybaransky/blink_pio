@@ -74,4 +74,5 @@ void CmdProcessor::info(void) {
   PVL(D6);
   PVL(D7);
   PVL(D8);
+  PVL(A0);
 }

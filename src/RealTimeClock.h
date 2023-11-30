@@ -15,3 +15,5 @@ class RealTimeClock {
         float       getTemperatureF(void);
         void        attachSQWInterrupt(uint8_t pin, void (*callback)(void), int mode);
 };
+
+extern RealTimeClock gRealTimeClock;

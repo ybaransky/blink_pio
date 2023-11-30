@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "CmdProcessor.h"
 #include "Config.h"
+#include "RealTimeClock.h"
 
 void CmdProcessor::init(void) {
   memset(_buffer,0,sizeof(_buffer));
@@ -29,8 +30,8 @@ void CmdProcessor::doCommand(void) {
   if (!token) return;
   switch (token[0]) {
     case 't' : 
-        PVL(millis());
-        break;
+      PVL(millis());
+      break;
     case 'g' :  // get
       gConfig.print();
       break;
@@ -39,6 +40,12 @@ void CmdProcessor::doCommand(void) {
       break;
     case 'l' :
       gConfig.load();
+      break;
+    case 'd' :
+      {
+        String ts = gRealTimeClock.now().timestamp(DateTime::TIMESTAMP_FULL);
+        P("Datetime= ");PL(ts);
+      }
       break;
     case 'i' :
       info();
@@ -49,6 +56,7 @@ void CmdProcessor::doCommand(void) {
       PL("g  contents of config");
       PL("s  save config file");
       PL("l  load config file");
+      PL("d  rtc date/time");
       break;
     default :
       P("unknown cmd: '"); P(token[0]); PL("'");
@@ -65,14 +73,8 @@ void CmdProcessor::process() {
 
 void CmdProcessor::info(void) {
   P("compile time:  "); P(__DATE__); P(" ");  PL(__TIME__);
-  PVL(D0);
-  PVL(D1);
-  PVL(D2);
-  PVL(D3);
-  PVL(D4);
-  PVL(D5);
-  PVL(D6);
-  PVL(D7);
+  PVL(D0); PVL(D1); PVL(D2); PVL(D3);
+  PVL(D4); PVL(D5); PVL(D6); PVL(D7);
   PVL(D8);
-  PVL(A0);
+  PVL(A0); PVL(TX); PVL(RX);
 }

@@ -1,14 +1,5 @@
 #pragma once
-
 #include <TM1637Display.h>
 
-class Display {
-    TM1637Display*  _display;
-
-    public:
-        Display(void) ()
-
-        void    init(byte clk, byte dio);
-        
-
-};
+extern void displayTest(TM1637Display&);
+extern void displayCount(TM1637Display&,int count,int increment);

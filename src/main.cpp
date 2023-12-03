@@ -5,7 +5,6 @@
 #include "Utils.h"
 #include "Config.h"
 #include "CmdProcessor.h"
-#include "Led.h"
 #include "RealTimeClock.h"
 #include <TM1637Display.h>
 #include "Display.h"
@@ -29,13 +28,15 @@ OneButton      gButton(D8,false,false);  // D8
 // RTC
 volatile bool EDGE;
 void IRAM_ATTR sqwCallback(void);
-byte           gSQWPin=D7;
+byte           gSQWPin=D7;  // D7
 RealTimeClock  gRealTimeClock;
 
 // display
 TM1637Display*  display0=nullptr;
 TM1637Display*  display1=nullptr;
 TM1637Display*  display2=nullptr;
+bool resettedTime = false;
+
 
 void setup() {
   // Initialize serial port
@@ -43,19 +44,22 @@ void setup() {
   while (!Serial) continue;
 
   // displays
-  display0 = new TM1637Display(D4,D3);  // clk, dio
-  display1 = new TM1637Display(D6,D5);  // clk, dio
+  display0 = new TM1637Display(D5,D6);  // D5,D6 clk, dio
+  display0->setBrightness(0x0f);
+  display1 = new TM1637Display(D3,D4);  // D3,D4 clk, dio
+  display1->setBrightness(0x0f);
   // how to use TX,RX pins on the wemos. 
   // https://www.youtube.com/watch?v=D9mBQ_WL7tE&t=2s
-  if (true) {
+  if (false) {
     pinMode(TX,FUNCTION_3);
     pinMode(RX,FUNCTION_3);
-    display2 = new TM1637Display(TX,RX);  // clk, dio
+    display2 = new TM1637Display(RX,TX);  // clk, dio
+    display2->setBrightness(0x0f);
   }
 
   // start the RealTimeClock
   EDGE = false;
-  gRealTimeClock.init();
+  resettedTime = gRealTimeClock.init();
   gRealTimeClock.attachSQWInterrupt(gSQWPin,sqwCallback,FALLING);
 
   // Should load default config if run for the first time
@@ -89,17 +93,21 @@ void loop() {
     static int count = 0;
     static ulong last=0;
     ulong now = millis();
-    PV(now); P(" "); P(now - last); PL("  EDGE");
+    DateTime dt = gRealTimeClock.now();
+    int minuteSecond = dt.minute()*100 + dt.second();
+    int dayHour      = dt.day()*100 + dt.hour();
+    int yearMonth    = (dt.year()*100)/100 + dt.month();
+    PV(now); P(" "); P(now - last); P("  EDGE"); P(" count="); P(count);
+    P(" display0: "); PV(minuteSecond); P(" display1: "); PVL(dayHour);
+    displayNumber(*display0,minuteSecond);
+    displayNumber(*display1,dayHour);
+    if (display2) displayNumber(*display2,yearMonth);
     EDGE = false;
     last = now;
     count++;
-    switch (count%3) {
-      case 0 : displayCount(*display0, count, 1); break;
-      case 1 : displayCount(*display1, count, 1); break;
-      case 2 : if (display2) displayCount(*display2, count, 1); break;
-    }
+    count = count%10000;
   }
-  gTaskScheduler.execute(); 
+ // gTaskScheduler.execute(); 
   //led.blink(5);
 
   if (Serial.available()>0) 
@@ -113,20 +121,29 @@ void IRAM_ATTR sqwCallback(void) {
 
 void singleClick(void) {
   P("Single click "); PVL(millis());
+  display0->showNumberDec(1111);
+  display1->showNumberDec(1111);
+  if (display2) display2->showNumberDec(1111);
 }
 
 void doubleClick(void) {
   P("Double click "); PVL(millis());
+  display0->showNumberDec(2222);
+  display1->showNumberDec(2222);
+  if (display2) display2->showNumberDec(2222);
 }
 
 void longPressStart(void) {
   // > 800ms
   P("LongPressStart "); PVL(millis());
+  display0->showNumberDec(3333);
+  display1->showNumberDec(3333);
+  if (display2) display2->showNumberDec(3333);
 }
 
 void task1Callback(void) {
   String ts  = gRealTimeClock.now().timestamp(DateTime::TIMESTAMP_FULL);
   float temp = gRealTimeClock.getTemperatureF();
   int now=millis();
-  PV(now); P(SP); P(ts); P("  temp="); P(temp); PL("f  TaskScheduler");
+  PV(now); P(SP); P(ts); P("  temp="); P(temp); P("f  TaskScheduler"); P(" "); PVL(resettedTime);
 }

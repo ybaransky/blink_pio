@@ -1,6 +1,8 @@
 #include "Utils.h"
 #include "Display.h"
 
+static uint8_t colonMask = 0x40; // 0b01000000;
+
 const uint8_t SEG_DONE[] = {
 	SEG_B | SEG_C | SEG_D | SEG_E | SEG_G,           // d
 	SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F,   // O
@@ -8,16 +10,12 @@ const uint8_t SEG_DONE[] = {
 	SEG_A | SEG_D | SEG_E | SEG_F | SEG_G            // E
 	};
 
+void displayNumber(TM1637Display &display, int number) {
+    display.showNumberDecEx(number,colonMask);
+}
+
 void displayCount(TM1637Display &display, int count, int increment) {
-    static uint8_t colonMask = 0x40; // 0b01000000;
-    int i;
-    display.setBrightness(0x0f);
-    count = count % 1000;
-    i = (increment > 0) ? count : 9999 - count;
-    if (count%2)
-        display.showNumberDec(i); 
-    else
-        display.showNumberDecEx(i,colonMask);
+    display.showNumberDecEx(count,colonMask);
 }
 
 void displayTest(TM1637Display &display)

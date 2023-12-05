@@ -3,9 +3,13 @@
 #include "Utils.h"
 
 bool RealTimeClock::init(void) {
+    _softRTC = NULL;
     if (!_rtc.begin()) {
         PL("Couldn't find ds3231 RTC");
         Serial.flush();
+        _softRTC = new RTC_Millis();
+        _softRTC->begin( DateTime(__DATE__,__TIME__));
+        return true;
     }
     
     bool resettedTime = _rtc.lostPower();
@@ -22,7 +26,7 @@ bool RealTimeClock::init(void) {
 }
 
 DateTime RealTimeClock::now(void) {
-    return _rtc.now();
+    return _softRTC ? _softRTC->now() : _rtc.now();
 }
 
 float RealTimeClock::getTemperatureF(void) {

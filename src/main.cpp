@@ -16,7 +16,7 @@ CmdProcessor    gCmdProcessor;
 
 // task scheduler
 void task1Callback(void) ;
-Task           task1(5*1000, TASK_FOREVER, &task1Callback);
+Task           task1(1000, TASK_FOREVER, &task1Callback);
 Scheduler      gTaskScheduler;
 
 // push button
@@ -44,16 +44,16 @@ void setup() {
   while (!Serial) continue;
 
   // displays
-  display0 = new TM1637Display(D5,D6);  // D5,D6 clk, dio
+  display0 = new TM1637Display(D3,D6);  // D5,D6 clk, dio
   display0->setBrightness(0x0f);
   display1 = new TM1637Display(D3,D4);  // D3,D4 clk, dio
   display1->setBrightness(0x0f);
   // how to use TX,RX pins on the wemos. 
   // https://www.youtube.com/watch?v=D9mBQ_WL7tE&t=2s
-  if (false) {
+  if (true) {
     pinMode(TX,FUNCTION_3);
-    pinMode(RX,FUNCTION_3);
-    display2 = new TM1637Display(RX,TX);  // clk, dio
+    // pinMode(RX,FUNCTION_3);
+    display2 = new TM1637Display(D3,TX);  // RX, TX clk, dio
     display2->setBrightness(0x0f);
   }
 
@@ -100,21 +100,20 @@ void loop() {
     PV(now); P(" "); P(now - last); P("  EDGE"); P(" count="); P(count);
     P(" display0: "); PV(minuteSecond); P(" display1: "); PVL(dayHour);
     displayNumber(*display0,minuteSecond);
-    displayNumber(*display1,dayHour);
-    if (display2) displayNumber(*display2,yearMonth);
+    displayNumber(*display1,(17*millis())%10000);
+    if (display2) displayNumber(*display2,count*count());
     EDGE = false;
     last = now;
     count++;
     count = count%10000;
   }
- // gTaskScheduler.execute(); 
-  //led.blink(5);
+  gTaskScheduler.execute(); 
+  gButton.tick();
 
   if (Serial.available()>0) 
     gCmdProcessor.process();
-
-  gButton.tick();
 }
+
 void IRAM_ATTR sqwCallback(void) {
   EDGE = true;
 }
@@ -142,6 +141,8 @@ void longPressStart(void) {
 }
 
 void task1Callback(void) {
+  EDGE = true;
+  return;
   String ts  = gRealTimeClock.now().timestamp(DateTime::TIMESTAMP_FULL);
   float temp = gRealTimeClock.getTemperatureF();
   int now=millis();

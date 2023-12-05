@@ -5,6 +5,7 @@
 class RealTimeClock {
     private:
         RTC_DS3231  _rtc;
+        RTC_Millis* _softRTC;
 
     public:
 
